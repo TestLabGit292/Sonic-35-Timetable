@@ -37,21 +37,23 @@
 
   /* nav */
   nav{position:sticky;top:0;z-index:30;background:rgba(11,11,13,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-  nav .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+  nav .wrap{display:flex;gap:30px;overflow-x:auto;scrollbar-width:none}
   nav .wrap::-webkit-scrollbar{display:none}
-  nav a{flex:none;padding:14px 14px;color:var(--muted);text-decoration:none;font-family:Archivo,sans-serif;font-stretch:112%;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid transparent}
+  nav a{flex:none;padding:17px 0 15px;color:var(--muted);text-decoration:none;font-family:Archivo,sans-serif;font-stretch:112%;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid transparent}
   nav a:hover{color:var(--text)}
   nav a.on{color:var(--text);border-color:var(--accent)}
-  nav a .count{color:var(--accent);margin-left:4px}
+  nav a .count{color:#000;background:var(--accent);border-radius:999px;font-size:10.5px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+  nav a .count:empty{display:none}
 
-  main{padding:26px 0 60px}
+  main.wrap{padding-top:34px;padding-bottom:64px}
   section{display:none}
   section.on{display:block}
   h2{font-family:Archivo,sans-serif;font-stretch:118%;font-weight:800;text-transform:uppercase;font-size:22px;margin:0 0 4px;letter-spacing:.02em}
-  .sub{color:var(--muted);margin:0 0 20px;font-size:14px}
+  .sub{color:var(--muted);margin:0 0 22px;font-size:14px}
+  .hint{color:var(--muted);font-size:13px;margin:-4px 0 16px}
 
   /* controls */
-  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:18px}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
   .chip{appearance:none;border:1px solid var(--line);background:transparent;color:var(--text);border-radius:999px;padding:7px 13px;font:500 13px Inter,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
   .chip .dot{width:9px;height:9px;border-radius:50%}
   .chip[aria-pressed="false"]{color:var(--muted)}
@@ -218,9 +220,10 @@
 <main class="wrap">
 
   <section id="v-timetable">
-    <div class="controls" id="floorchips"></div>
-    <div class="controls" style="margin-top:-8px">
-      <span class="sub" style="margin:0">Tippe auf einen Act für Details. ★ merkt ihn für deinen Plan.</span>
+    <h2>Timetable</h2>
+    <p class="sub">Samstag, 7. November · 21:00 bis Schluss. Tippe auf einen Act für Details, ★ merkt ihn für deinen Plan.</p>
+    <div class="controls">
+      <div class="controls" id="floorchips" style="margin:0"></div>
       <div class="seg" role="group" aria-label="Ansicht">
         <button data-mode="grid">Raster</button><button data-mode="list">Liste</button>
       </div>
@@ -463,16 +466,49 @@ const timeLabel = s => s.start+' – '+endLabel(s);
 const fc = id => `var(--${id})`;
 const esc = s => s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-// Spotify (Artist-Suche, öffnet die App bzw. den Web-Player)
-const SPOTIFY_SPLIT = {
-  'Hysta vs. Promo':['Hysta','Promo'],
-  'Galopp B2B Friendly Neighbour':['Galopp','Friendly Neighbour'],
-  'Tom vs. Shadow':['Tom vs Shadow'],
+// Spotify: direkte, geprüfte Artist-Profile (Genre passend zum Floor). Kein Eintrag = kein passendes Profil gefunden.
+const SP = {
+  'MTS & Fr3akmaster':[['MTS & Fr3akmaster','3tIZZgFygaKRmXRZXQRq5c']],
+  'MIAZ':[['MIAZ','3yGcAiMSNP3yKOJpermnKs']],
+  'Lady Tom':[['Lady Tom','0rUhHm6t7SqX02iqdPdb4N']],
+  'Brennan Heart':[['Brennan Heart','5QySqc6yAFDx9m7fedFZmC']],
+  'Da Tweekaz':[['Da Tweekaz','6UOk7DmvqlzWmo6gjhZvn6']],
+  'The Saints':[['The Saints','0CE9b5MpyYgJNxa2bNkOMc']],
+  'Toza':[['Toza','4EGv5uSV4xrFpAfrkvW71L']],
+  'Equalizerz':[['Equalizerz','1X1p3mZkveDaFLuN7V8USG']],
+  'Ling Ling':[['Ling Ling','1MSRMPwsALJ7mY9AwIr49t']],
+  'The Cold Demon':[['The Cold Demon','0Tmwl9f3zAOSsJudXsHKNs']],
+  'DJ Giuly':[['DJ Giuly','5OLsc66S7vRHShJZWirfF0']],
+  'Dark Headz':[['Dark Headz','0OHJSmjFzDTPQ4sgq2X0JP']],
+  'Hysta vs. Promo':[['Hysta','5b4R0928g89y6qmOgtEN1O'],['Promo','6CG5i0dfyqWIOrqFY60ooq']],
+  'Dr. Peacock':[['Dr. Peacock','4RbUYWWjEBb4umwqakOEd3']],
+  'Hysta':[['Hysta','5b4R0928g89y6qmOgtEN1O']],
+  'The Sickest Squad':[['The Sickest Squad','1NGSmZz3W7RduM185NLWdk']],
+  'Dr. Z':[['Dr. Z','5kcfpIWkJYRZYW0cvgyl2N']],
+  'Hardcorehead':[['Hardcorehead','6NRW9J3bvFGnGcws8GhULs']],
+  'Centaury':[['DJ Centaury','2lX53aZE2J4o6CG0jk8mks']],
+  'Mind-X':[['Mind-X','1ldcftDAWU5vJsRPUzpmkl']],
+  'DJ Tatana':[['DJ Tatana','7HtJc2KtxOhDojNYf2z0B7']],
+  'Dave202':[['Dave202','2cQ47iUYGq4lHTtQ5GKMr9']],
+  'Ferry Corsten':[['Ferry Corsten','2ohlvFf9PBsDELdRstPtlP']],
+  'Ruben de Ronde':[['Ruben de Ronde','3q7BRw9D1DupXTONJdr94m']],
+  'Madwave':[['Madwave','4SVLgYHQlzn7USfkcWFmsh']],
+  'Effim':[['Effim','0r3lEfmLJ5dlZPl2SgRw46']],
+  'Omiki':[['Omiki','7pHwBqsYULdAdHgSwf1q9f']],
+  'Blastoyz':[['Blastoyz','6WLP1sraOcF3Gaxp7xBa4p']],
+  'Liquid Soul':[['Liquid Soul','64nL3MP8zmuLqUq8DDaIKS']],
+  'Tanja Alison':[['Tanja Alison','3jfGYyP6QnTvBleVWftAUh']],
+  'Galopp B2B Friendly Neighbour':[['Galopp','5n6q0TwEIwqjOt9TKEztio'],['Friendly Neighbour','7A0qSU8JQIVaZY80ys99IQ']],
+  'POLTERGST':[['POLTERGST','0QlnfOIWscqfuWTcci7IwM']],
+  'Pencil':[['Pencil','0WpuiEplimtEOyXv5SGurF']],
+  'Dasstudach':[['Dasstudach','53T6qtB8VvMstwMKCaXJM8']],
+  'A.N.I.':[['A.N.I.','18F3j10NWRggq0MTOcXKkx']],
 };
-const spotifyNames = s => SPOTIFY_SPLIT[s.artist] || [s.artist];
-const spotifyUrl = n => 'https://open.spotify.com/search/' + encodeURIComponent(n) + '/artists';
-const spLinks = (s, label) => spotifyNames(s).map(n=>`<a class="sp" href="${spotifyUrl(n)}" target="_blank" rel="noopener">${label ? 'Spotify' : esc(n)}</a>`).join('');
-const spLinksLabeled = s => { const ns=spotifyNames(s); return ns.length===1 ? `<a class="sp" href="${spotifyUrl(ns[0])}" target="_blank" rel="noopener">Spotify</a>` : spLinks(s,false); };
+const spList = s => SP[s.artist] || [];
+const spA = (n,id,label) => `<a class="sp" href="https://open.spotify.com/artist/${id}" target="_blank" rel="noopener">${esc(label)}</a>`;
+// kompakte Links: "Spotify" bei einem Profil, sonst je Artist-Name
+const spLinksLabeled = s => { const l=spList(s); return l.length===1 ? spA(l[0][0],l[0][1],'Spotify') : l.map(([n,id])=>spA(n,id,n)).join(''); };
+const spRow = s => spList(s).length ? `<div class="sp-row">${spLinksLabeled(s)}</div>` : '';
 
 // event time (Europe/Zurich, CET = UTC+1 on 7 Nov)
 const EVENT_START = Date.UTC(2026,10,7,20,0,0);
@@ -562,7 +598,7 @@ function renderTT(){
 function rowHTML(s, now, extra=''){
   return `<div class="row ${now?'now':''}" data-id="${s.id}">
     <div class="rt">${timeLabel(s)}</div>
-    <div class="rn">${esc(s.artist)}${s.note?`<span class="rnote">${esc(s.note)}</span>`:''}${extra}<div class="sp-row">${spLinksLabeled(s)}</div></div>
+    <div class="rn">${esc(s.artist)}${s.note?`<span class="rnote">${esc(s.note)}</span>`:''}${extra}${spRow(s)}</div>
     <button class="star ${favs.has(s.id)?'on':''}" data-star="${s.id}" aria-label="Merken">${favs.has(s.id)?'★':'☆'}</button>
   </div>`;
 }
@@ -641,7 +677,7 @@ function openSet(id){
     <h3>${esc(s.artist)}</h3>
     ${s.note?`<div class="note">${esc(s.note)}</div>`:''}
     <div class="time">${timeLabel(s)}</div>
-    <div class="sp-row" style="margin-top:12px">${spotifyNames(s).length>1 ? spLinks(s,false) : spLinks(s,true).replace('>Spotify<','>Auf Spotify anhören<')}</div>
+    <div class="sp-row" style="margin-top:12px">${spList(s).length===1 ? spA('',spList(s)[0][1],'Auf Spotify anhören') : spList(s).length ? spList(s).map(([n,id])=>spA(n,id,n+' auf Spotify')).join('') : '<span style="font-size:12.5px;color:var(--muted)">Kein Spotify-Profil gefunden</span>'}</div>
     <div class="ctx">
       ${prev?`<div>Davor: <b>${esc(prev.artist)}</b> (${prev.start})</div>`:'<div>Eröffnet den Floor</div>'}
       ${next?`<div>Danach: <b>${esc(next.artist)}</b> (${next.start})</div>`:'<div>Closing-Set bis Schluss</div>'}
