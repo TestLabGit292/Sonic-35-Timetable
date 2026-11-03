@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sonic #35 – Timetable & Lineup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0b0d; --panel:#141418; --panel2:#1b1b21; --line:#26262d;
+    --text:#f2f2ee; --muted:#8e8e98; --accent:#d9ff3f;
+    --hardstyle:#4d8dff; --hardcore:#ff4d3d; --trance:#b07cff; --progressive:#2fe0b0; --techno:#ff9a2e;
+    --scale:1.7px; /* px per minute */
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text)}
+  body{font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent)}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+  .display{font-family:Archivo,sans-serif;font-stretch:118%;text-transform:uppercase;letter-spacing:.01em}
+
+  /* header */
+  header{padding:36px 0 20px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 24px;justify-content:space-between}
+  h1{margin:0;font-family:Archivo,sans-serif;font-stretch:125%;font-weight:900;font-size:clamp(38px,7vw,72px);line-height:.9;text-transform:uppercase}
+  h1 .num{color:var(--accent)}
+  h1 small{display:block;font-size:.32em;font-weight:700;letter-spacing:.18em;color:var(--muted);margin-top:10px}
+  .facts{display:flex;flex-wrap:wrap;gap:8px}
+  .fact{border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:13px;color:var(--text);white-space:nowrap}
+  .fact b{color:var(--accent);font-weight:600}
+  .status{margin-top:18px;font-size:14px;color:var(--muted)}
+  .status .live{display:inline-flex;align-items:center;gap:8px;color:var(--accent);font-weight:600}
+  .status .live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 var(--accent);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(217,255,63,.6)}100%{box-shadow:0 0 0 10px rgba(217,255,63,0)}}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:30;background:rgba(11,11,13,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+  nav .wrap::-webkit-scrollbar{display:none}
+  nav a{flex:none;padding:14px 14px;color:var(--muted);text-decoration:none;font-family:Archivo,sans-serif;font-stretch:112%;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid transparent}
+  nav a:hover{color:var(--text)}
+  nav a.on{color:var(--text);border-color:var(--accent)}
+  nav a .count{color:var(--accent);margin-left:4px}
+
+  main{padding:26px 0 60px}
+  section{display:none}
+  section.on{display:block}
+  h2{font-family:Archivo,sans-serif;font-stretch:118%;font-weight:800;text-transform:uppercase;font-size:22px;margin:0 0 4px;letter-spacing:.02em}
+  .sub{color:var(--muted);margin:0 0 20px;font-size:14px}
+
+  /* controls */
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:18px}
+  .chip{appearance:none;border:1px solid var(--line);background:transparent;color:var(--text);border-radius:999px;padding:7px 13px;font:500 13px Inter,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  .chip .dot{width:9px;height:9px;border-radius:50%}
+  .chip[aria-pressed="false"]{color:var(--muted)}
+  .chip[aria-pressed="false"] .dot{opacity:.3}
+  .chip:hover{border-color:#3a3a43}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-left:auto}
+  .seg button{appearance:none;border:0;background:transparent;color:var(--muted);padding:7px 14px;font:500 13px Inter,sans-serif;cursor:pointer}
+  .seg button.on{background:var(--text);color:var(--bg)}
+
+  /* grid timetable */
+  .grid-scroll{overflow:auto;max-height:calc(100vh - 120px);border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+  .grid{display:grid;grid-template-columns:54px repeat(var(--cols),minmax(160px,1fr));min-width:calc(54px + var(--cols)*160px);position:relative}
+  .gh{position:sticky;top:0;z-index:5;background:var(--panel2);padding:12px 10px;border-bottom:1px solid var(--line);border-left:1px solid var(--line)}
+  .gh:first-child{border-left:0;left:0;z-index:6}
+  .gh .fname{font-family:Archivo,sans-serif;font-stretch:112%;font-weight:800;text-transform:uppercase;font-size:13px;letter-spacing:.04em;display:flex;align-items:center;gap:7px}
+  .gh .fname .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .gh .fgenre{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .col{position:relative;border-left:1px solid var(--line);height:calc(540*var(--scale))}
+  .timecol{position:sticky;left:0;z-index:3;background:var(--panel);height:calc(540*var(--scale))}
+  .tick{position:absolute;left:0;right:0;font-size:11px;color:var(--muted);padding:0 8px;transform:translateY(-50%);font-variant-numeric:tabular-nums}
+  .tick:first-child{transform:none;padding-top:4px}
+  .hline{position:absolute;left:54px;right:0;height:1px;background:var(--line);pointer-events:none}
+  .set{position:absolute;z-index:1;left:5px;right:5px;border-radius:8px;padding:7px 9px;overflow:hidden;cursor:pointer;border:1px solid transparent;
+       background:color-mix(in srgb,var(--fc) 15%,var(--panel));border-left:3px solid var(--fc);transition:background .15s}
+  .set:hover{background:color-mix(in srgb,var(--fc) 26%,var(--panel))}
+  .set .an{font-family:Archivo,sans-serif;font-stretch:108%;font-weight:750;text-transform:uppercase;font-size:13px;line-height:1.15;letter-spacing:.01em}
+  .set .at{font-size:11.5px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
+  .set .anote{font-size:10.5px;color:var(--muted);text-transform:none}
+  .set.short{padding:4px 9px;display:flex;align-items:center;gap:8px}
+  .set.short .at{margin:0}
+  .set.fav{border-color:var(--accent)}
+  .set.fav::after{content:"★";position:absolute;top:5px;right:7px;color:var(--accent);font-size:12px}
+  .set.now{box-shadow:0 0 0 1px var(--accent),0 0 22px -6px var(--accent)}
+  .set.dim{opacity:.18}
+  .nowline{position:absolute;left:54px;right:0;height:2px;background:var(--accent);z-index:4;pointer-events:none}
+  .nowline span{position:absolute;left:-52px;top:-9px;background:var(--accent);color:#000;font:700 10.5px Inter,sans-serif;padding:2px 5px;border-radius:4px}
+
+  /* list timetable */
+  .floors-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+  .fl{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .fl-h{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;border-top:3px solid var(--fc)}
+  .fl-h .fname{font-family:Archivo,sans-serif;font-stretch:115%;font-weight:800;text-transform:uppercase;font-size:15px}
+  .fl-h .fgenre{font-size:12px;color:var(--muted)}
+  .row{display:grid;grid-template-columns:96px 1fr auto;gap:10px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);cursor:pointer}
+  .row:last-child{border-bottom:0}
+  .row:hover{background:var(--panel2)}
+  .row .rt{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .row .rn{font-family:Archivo,sans-serif;font-stretch:108%;font-weight:700;text-transform:uppercase;font-size:14px;line-height:1.2}
+  .row .rnote{display:block;font-family:Inter,sans-serif;font-weight:400;text-transform:none;font-size:12px;color:var(--muted)}
+  .row.now{background:color-mix(in srgb,var(--accent) 9%,transparent)}
+  .row.now .rt{color:var(--accent)}
+  .star{appearance:none;background:none;border:0;color:#4a4a54;font-size:18px;cursor:pointer;padding:2px 4px;line-height:1}
+  .star.on{color:var(--accent)}
+  .star:hover{color:var(--text)}
+  .star.on:hover{color:var(--accent)}
+
+  /* artists */
+  .search{flex:1 1 260px;min-width:0;background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:10px 16px;font:400 14px Inter,sans-serif;outline:none}
+  .search:focus{border-color:#4a4a54}
+  .az{columns:2 340px;column-gap:28px}
+  .letter{break-inside:avoid;margin-bottom:14px}
+  .letter h3{margin:0 0 4px;font-family:Archivo,sans-serif;font-stretch:120%;font-weight:900;color:var(--accent);font-size:15px}
+  .art{break-inside:avoid;display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .art .rn{font-family:Archivo,sans-serif;font-stretch:108%;font-weight:700;text-transform:uppercase;font-size:14.5px}
+  .art .slots{grid-column:1/2;display:flex;flex-wrap:wrap;gap:6px;margin-top:3px}
+  .slot{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:2px 8px;cursor:pointer}
+  .slot .dot{width:7px;height:7px;border-radius:50%}
+  .art .star{grid-row:1/3;grid-column:2;align-self:center}
+  .empty{color:var(--muted);padding:30px 0;text-align:center}
+
+  /* plan */
+  .clash{color:#ff6b5b;font-size:12px;font-weight:600}
+
+  /* floors */
+  .fcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:14px}
+  .fcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;position:relative;overflow:hidden;cursor:pointer}
+  .fcard::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--fc)}
+  .fcard:hover{border-color:#3a3a43}
+  .fcard .fname{font-family:Archivo,sans-serif;font-stretch:120%;font-weight:900;text-transform:uppercase;font-size:21px;line-height:1.05}
+  .fcard .fgenre{color:var(--muted);font-size:13px;margin:3px 0 14px}
+  .fcard .meta{display:flex;gap:16px;font-size:12.5px;color:var(--muted);margin-bottom:12px}
+  .fcard .meta b{display:block;color:var(--text);font-size:18px;font-family:Archivo,sans-serif;font-stretch:110%}
+  .fcard .names{font-size:13px;line-height:1.6}
+  .fcard .names span{white-space:nowrap}
+  .tag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:2px 6px;margin-left:6px;vertical-align:middle;background:var(--accent);color:#000}
+  .tag.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+
+  /* map */
+  .mapgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr);gap:18px}
+  @media (max-width:860px){.mapgrid{grid-template-columns:1fr}}
+  .mapbox{align-self:start;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .mapbox svg{display:block;width:100%;height:auto}
+  .mapnote{font-size:12px;color:var(--muted);padding:10px 14px;border-top:1px solid var(--line)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+  .card h3{margin:0 0 10px;font-family:Archivo,sans-serif;font-stretch:115%;font-weight:800;text-transform:uppercase;font-size:14px;letter-spacing:.04em}
+  .card p,.card li{font-size:14px;color:#cfcfd4;margin:0 0 8px}
+  .card ul{padding-left:18px;margin:0}
+  .card .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+  .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .btn{display:inline-block;text-decoration:none;color:var(--text);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:500}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.primary{background:var(--accent);color:#000;border-color:var(--accent)}
+  .btn.primary:hover{color:#000;filter:brightness(1.08)}
+  .legend{display:grid;gap:8px;font-size:13px;color:#cfcfd4}
+  .legend div{display:flex;align-items:center;gap:10px}
+  .legend svg{flex:none}
+  .warn{border-left:3px solid #ff6b5b}
+
+  .infogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+  .infogrid .card{margin:0}
+
+  /* modal */
+  .modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.65);display:none;align-items:flex-end;justify-content:center;padding:16px}
+  .modal.on{display:flex}
+  @media (min-width:640px){.modal{align-items:center}}
+  .sheet{width:100%;max-width:440px;background:var(--panel2);border:1px solid var(--line);border-radius:18px;padding:22px;border-top:4px solid var(--fc)}
+  .sheet .fl-tag{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+  .sheet .fl-tag .dot{width:9px;height:9px;border-radius:50%;background:var(--fc)}
+  .sheet h3{font-family:Archivo,sans-serif;font-stretch:120%;font-weight:900;text-transform:uppercase;font-size:28px;line-height:1;margin:10px 0 6px}
+  .sheet .note{color:var(--muted);font-size:14px;margin-bottom:12px}
+  .sheet .time{font-size:22px;font-family:Archivo,sans-serif;font-stretch:110%;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+  .sheet .ctx{margin-top:16px;border-top:1px solid var(--line);padding-top:12px;font-size:13px;color:var(--muted);display:grid;gap:4px}
+  .sheet .ctx b{color:var(--text);font-weight:500}
+  .sheet .acts{display:flex;gap:8px;margin-top:18px}
+  .sheet .acts button{flex:1;appearance:none;border:1px solid var(--line);background:transparent;color:var(--text);border-radius:999px;padding:10px;font:600 14px Inter,sans-serif;cursor:pointer}
+  .sheet .acts button.fav{background:var(--accent);color:#000;border-color:var(--accent)}
+
+  .sp{display:inline-flex;align-items:center;gap:5px;font:600 11.5px Inter,sans-serif;color:#1ed760;text-decoration:none;border:1px solid rgba(30,215,96,.35);border-radius:999px;padding:2px 9px;white-space:nowrap;text-transform:none;letter-spacing:0;vertical-align:middle}
+  .sp:hover{background:rgba(30,215,96,.12);border-color:#1ed760}
+  .sp::before{content:"\25B6";font-size:8px}
+  .sp-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+  .sheet .sp{font-size:13px;padding:6px 13px}
+  footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);font-size:12.5px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <h1>Sonic <span class="num">#35</span><small>Recharged · Timetable & Lineup</small></h1>
+      <div class="facts">
+        <span class="fact"><b>Sa 7. Nov 2026</b></span>
+        <span class="fact">21:00 – 06:00</span>
+        <span class="fact">Industrie Bännli, Wolfwil SO</span>
+        <span class="fact">5 Floors · <span id="nsets"></span> Sets</span>
+      </div>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+</header>
+
+<nav>
+  <div class="wrap" id="nav">
+    <a href="#timetable" data-v="timetable">Timetable</a>
+    <a href="#artists" data-v="artists">Artists</a>
+    <a href="#floors" data-v="floors">Floors</a>
+    <a href="#plan" data-v="plan">Mein Plan<span class="count" id="favcount"></span></a>
+    <a href="#map" data-v="map">Map & Anreise</a>
+    <a href="#info" data-v="info">Infos</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <section id="v-timetable">
+    <div class="controls" id="floorchips"></div>
+    <div class="controls" style="margin-top:-8px">
+      <span class="sub" style="margin:0">Tippe auf einen Act für Details. ★ merkt ihn für deinen Plan.</span>
+      <div class="seg" role="group" aria-label="Ansicht">
+        <button data-mode="grid">Raster</button><button data-mode="list">Liste</button>
+      </div>
+    </div>
+    <div id="tt"></div>
+  </section>
+
+  <section id="v-artists">
+    <h2>Alle Artists</h2>
+    <p class="sub" id="artsub"></p>
+    <div class="controls"><input class="search" id="q" type="search" placeholder="Artist suchen …" autocomplete="off"></div>
+    <div id="az"></div>
+  </section>
+
+  <section id="v-floors">
+    <h2>Dancefloors</h2>
+    <p class="sub">Fünf Floors, alle von 21:00 bis Ende. Tippe auf einen Floor, um nur seinen Timetable zu sehen.</p>
+    <div class="fcards" id="fcards"></div>
+  </section>
+
+  <section id="v-plan">
+    <h2>Mein Plan</h2>
+    <p class="sub">Deine gemerkten Sets in zeitlicher Reihenfolge. Überschneidungen werden markiert. Gespeichert nur in diesem Browser.</p>
+    <div id="planlist"></div>
+  </section>
+
+  <section id="v-map">
+    <h2>Map & Anreise</h2>
+    <p class="sub">Einen offiziellen Geländeplan (wo welcher Floor steht) hat Sonic nicht veröffentlicht. Hier siehst du die Lage des Areals und den Weg vom Bahnhof.</p>
+    <div class="mapgrid">
+      <div class="mapbox">
+        <svg viewBox="0 0 800 540" role="img" aria-label="Schematische Karte: Bahnhof Murgenthal, Aarebrücke und Festivalgelände Industrie Bännli">
+          <defs>
+            <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <line x1="0" y1="0" x2="0" y2="8" stroke="#2a2a31" stroke-width="3"/>
+            </pattern>
+            <marker id="arr" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#8e8e98"/>
+            </marker>
+          </defs>
+          <rect width="800" height="540" fill="#121216"/>
+          <!-- forest edge (Waldrand Wolfwil) -->
+          <path d="M0 0 H360 C330 60 300 90 250 100 C180 112 120 95 60 120 C30 132 10 140 0 150 Z" fill="#16201a"/>
+          <text x="40" y="52" fill="#4c6b55" font-family="Inter, Arial, sans-serif" font-size="13">Wald</text>
+          <!-- canton labels -->
+          <text x="40" y="300" fill="#3a3a44" font-family="Archivo, Arial, sans-serif" font-weight="800" font-size="15" letter-spacing="3">KANTON SO · WOLFWIL</text>
+          <text x="250" y="528" fill="#3a3a44" font-family="Archivo, Arial, sans-serif" font-weight="800" font-size="15" letter-spacing="3">KANTON AG · MURGENTHAL</text>
+          <!-- Aare river -->
+          <path d="M-20 470 C150 445 330 425 470 395 C560 375 610 330 680 270 C730 228 770 205 830 190" fill="none" stroke="#1e3a5c" stroke-width="34" stroke-linecap="round"/>
+          <path d="M-20 470 C150 445 330 425 470 395 C560 375 610 330 680 270 C730 228 770 205 830 190" fill="none" stroke="#2a5585" stroke-width="2" opacity=".6"/>
+          <text x="150" y="455" fill="#5d8cc4" font-family="Inter, Arial, sans-serif" font-style="italic" font-size="14" transform="rotate(-6 150 455)">Aare</text>
+          <!-- railway -->
+          <path d="M-10 540 C200 520 450 470 640 436 C700 425 760 400 820 372" fill="none" stroke="#55555f" stroke-width="3"/>
+          <path d="M-10 540 C200 520 450 470 640 436 C700 425 760 400 820 372" fill="none" stroke="#121216" stroke-width="1.5" stroke-dasharray="7 7"/>
+          <text x="700" y="438" fill="#6f6f79" font-family="Inter, Arial, sans-serif" font-size="11" transform="rotate(-20 700 438)">Bahn Bern – Olten – Zürich</text>
+          <!-- roads -->
+          <path d="M655 540 L640 470 L612 380 L590 330 L520 262 L430 205 L360 150 L330 90 L320 0" fill="none" stroke="#3b3b44" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M520 262 L420 238 L330 214" fill="none" stroke="#3b3b44" stroke-width="7" stroke-linecap="round"/>
+          <!-- bridge -->
+          <path d="M621 405 L598 345" stroke="#6a6a75" stroke-width="13" stroke-linecap="butt"/>
+          <path d="M621 405 L598 345" stroke="#3b3b44" stroke-width="9"/>
+          <!-- closure segment: Aarebrücke (SO-Seite) bis Waldrand -->
+          <path d="M590 330 L520 262 L430 205 L360 150 L338 110" fill="none" stroke="#ff6b5b" stroke-width="3" stroke-dasharray="6 6" stroke-linecap="round"/>
+          <!-- venue -->
+          <g>
+            <rect x="170" y="150" width="170" height="104" rx="6" fill="url(#hatch)" stroke="#d9ff3f" stroke-width="2"/>
+            <rect x="170" y="150" width="170" height="104" rx="6" fill="#d9ff3f" opacity=".08"/>
+            <text x="255" y="196" text-anchor="middle" fill="#d9ff3f" font-family="Archivo, Arial, sans-serif" font-stretch="120%" font-weight="900" font-size="17">SONIC #35</text>
+            <text x="255" y="216" text-anchor="middle" fill="#f2f2ee" font-family="Inter, Arial, sans-serif" font-size="12">Industrie Bännli 21</text>
+            <text x="255" y="234" text-anchor="middle" fill="#8e8e98" font-family="Inter, Arial, sans-serif" font-size="11">5 Floors · Hallen + Outdoor</text>
+          </g>
+          <!-- walking route -->
+          <path d="M632 436 L612 380 L590 330 L520 262 L420 238 L342 216" fill="none" stroke="#d9ff3f" stroke-width="3" stroke-dasharray="1 7" stroke-linecap="round"/>
+          <!-- station -->
+          <g>
+            <circle cx="632" cy="436" r="13" fill="#e53935"/>
+            <text x="632" y="441" text-anchor="middle" fill="#fff" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="12">SBB</text>
+            <text x="652" y="470" fill="#f2f2ee" font-family="Inter, Arial, sans-serif" font-weight="600" font-size="13">Bhf Murgenthal</text>
+          </g>
+          <!-- shuttle stop -->
+          <g>
+            <rect x="560" y="306" width="22" height="22" rx="5" fill="#2fe0b0"/>
+            <text x="571" y="322" text-anchor="middle" fill="#000" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="12">H</text>
+            <text x="470" y="322" fill="#2fe0b0" font-family="Inter, Arial, sans-serif" font-weight="600" font-size="12">Shuttle-Halt</text>
+          </g>
+          <text x="618" y="356" fill="#8e8e98" font-family="Inter, Arial, sans-serif" font-size="11">Aarebrücke</text>
+          <!-- closure label -->
+          <text x="452" y="182" fill="#ff6b5b" font-family="Inter, Arial, sans-serif" font-weight="600" font-size="11.5" transform="rotate(33 452 182)">gesperrt 20:30–07:00</text>
+          <!-- motorway arrows -->
+          <path d="M335 60 L335 22" stroke="#8e8e98" stroke-width="2" marker-end="url(#arr)"/>
+          <text x="348" y="36" fill="#8e8e98" font-family="Inter, Arial, sans-serif" font-size="12">Wolfwil · A1 Egerkingen</text>
+          <path d="M720 500 L780 470" stroke="#8e8e98" stroke-width="2" marker-end="url(#arr)"/>
+          <text x="676" y="530" fill="#8e8e98" font-family="Inter, Arial, sans-serif" font-size="12">A1 Rothrist</text>
+          <!-- north + scale -->
+          <g transform="translate(750,40)">
+            <path d="M0 -18 L7 6 L0 1 L-7 6 Z" fill="#f2f2ee"/>
+            <text x="0" y="22" text-anchor="middle" fill="#8e8e98" font-family="Inter, Arial, sans-serif" font-size="11">N</text>
+          </g>
+          <g transform="translate(40,500)">
+            <line x1="0" y1="0" x2="120" y2="0" stroke="#8e8e98" stroke-width="2"/>
+            <line x1="0" y1="-5" x2="0" y2="5" stroke="#8e8e98" stroke-width="2"/>
+            <line x1="120" y1="-5" x2="120" y2="5" stroke="#8e8e98" stroke-width="2"/>
+            <text x="60" y="-8" text-anchor="middle" fill="#8e8e98" font-family="Inter, Arial, sans-serif" font-size="11">ca. 200 m</text>
+          </g>
+        </svg>
+        <div class="mapnote">Schematische Karte. Bahnhof und Gelände sind nach OpenStreetMap-Koordinaten platziert, Strassen- und Flussverlauf nur ungefähr. Luftlinie Bahnhof → Gelände ca. 750 m.</div>
+      </div>
+      <div>
+        <div class="card">
+          <h3>Legende</h3>
+          <div class="legend">
+            <div><svg width="28" height="10"><line x1="2" y1="5" x2="26" y2="5" stroke="#d9ff3f" stroke-width="3" stroke-dasharray="1 6" stroke-linecap="round"/></svg>Fussweg vom Bahnhof (wenige Minuten)</div>
+            <div><svg width="28" height="16"><rect x="6" y="1" width="14" height="14" rx="3" fill="#2fe0b0"/></svg>Shuttle-Halt nach der Aarebrücke (SO-Seite)</div>
+            <div><svg width="28" height="10"><line x1="2" y1="5" x2="26" y2="5" stroke="#ff6b5b" stroke-width="3" stroke-dasharray="5 5"/></svg>Murgenthalerstrasse gesperrt, 20:30–07:00</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Mit dem Zug</h3>
+          <p>Bahnhof Murgenthal an der Linie Zürich–Olten–Bern, ein paar hundert Meter vom Gelände. Zu Fuss oder mit dem Gratis-Shuttle. Der Veranstalter empfiehlt den ÖV.</p>
+          <div class="btns"><a class="btn" href="https://www.sbb.ch" target="_blank" rel="noopener">Fahrplan SBB</a></div>
+        </div>
+        <div class="card warn">
+          <h3>Mit dem Auto</h3>
+          <p>A1-Ausfahrten Rothrist oder Egerkingen, je wenige Minuten. Kostenpflichtige Parkplätze in der Nähe, der Signalisation und dem Verkehrsdienst folgen. Gratis-Shuttles fahren zwischen Bahnhof, Haltestellen und Parkplätzen.</p>
+          <p>Die Murgenthalerstrasse ist von der Aarebrücke (SO-Seite) bis zum Waldrand Wolfwil von 20:30 bis 07:00 gesperrt.</p>
+        </div>
+        <div class="btns">
+          <a class="btn primary" href="https://www.google.com/maps/search/?api=1&query=47.26920,7.82383" target="_blank" rel="noopener">In Google Maps öffnen</a>
+          <a class="btn" href="https://www.openstreetmap.org/?mlat=47.26920&mlon=7.82383#map=16/47.2675/7.8280" target="_blank" rel="noopener">OpenStreetMap</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-info">
+    <h2>Infos</h2>
+    <p class="sub">Das Wichtigste auf einen Blick.</p>
+    <div class="infogrid">
+      <div class="card">
+        <h3>Wann & wo</h3>
+        <p><span class="k">Datum</span><br>Samstag, 7. November 2026</p>
+        <p><span class="k">Zeit</span><br>21:00 – 06:00</p>
+        <p><span class="k">Ort</span><br>Industrie Bännli, Bännli 21, 4628 Wolfwil SO (bei Egerkingen)</p>
+      </div>
+      <div class="card">
+        <h3>Einlass</h3>
+        <ul>
+          <li>Zutritt ab 16 Jahren, Ausweispflicht</li>
+          <li>One Way Entry: kein Wiedereinlass</li>
+          <li>Limitierte Kapazität, Abendkasse mit Preisaufschlag</li>
+        </ul>
+        <div class="btns"><a class="btn primary" href="https://www.ticketcorner.ch/event/sonic-35-industrie-baennli-20919155/" target="_blank" rel="noopener">Tickets</a><a class="btn" href="https://www.ticketcorner.ch/event/sonic-35-industrie-baennli-20919574/" target="_blank" rel="noopener">VIP-Tickets</a></div>
+      </div>
+      <div class="card">
+        <h3>VIP</h3>
+        <ul>
+          <li>Separater VIP-Eingang</li>
+          <li>VIP-Lounges und VIP-Tribünen mit Sicht auf den Hardstyle- und den Progressive-Floor</li>
+          <li>VIP-WCs</li>
+          <li>Getränke-/Essensguthaben CHF 50.–</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Das Gelände</h3>
+        <p>Historische Industriehallen kombiniert mit grossen Outdoor-Bereichen, dazu ein fast vollständig überdachter Raucher- und Aufenthaltsbereich. Sonic findet zum zehnten Mal auf dem Areal Bännli statt.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">Inoffizielle Übersicht, zusammengestellt aus den Timetables und Infos auf <a href="https://sonic.ch" target="_blank" rel="noopener">sonic.ch</a> (Stand 3. Nov 2026). Änderungen vorbehalten, verbindlich ist sonic.ch. Veranstalter: Hannibal Events GmbH.</div>
+</footer>
+
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+</div>
+
+<script>
+const FLOORS = [
+  {id:'hardstyle', name:'Hardstyle', genre:'Hardstyle / Rawstyle', extra:'Danceshow by Beautylicious Dancers', vip:true},
+  {id:'hardcore', name:'Hardcore', genre:'Hardcore'},
+  {id:'trance', name:'Trance', genre:'Trance / Remember'},
+  {id:'progressive', name:'Progressive', genre:'Progressive- / Psytrance', vip:true},
+  {id:'techno', name:'Techno', genre:'Techno', isNew:true},
+];
+// [floor, artist, note, start, end]  (end "END" = Schluss, ca. 06:00)
+const RAW = [
+ ['hardstyle','MTS & Fr3akmaster','', '21:00','22:00'],
+ ['hardstyle','MIAZ','Live Vocals & Danceshow','22:00','22:30'],
+ ['hardstyle','Lady Tom','The Queen’s Return','22:30','23:15'],
+ ['hardstyle','Hardvision','','23:15','00:00'],
+ ['hardstyle','Brennan Heart','','00:00','01:15'],
+ ['hardstyle','Da Tweekaz','','01:15','02:30'],
+ ['hardstyle','The Saints','','02:30','03:45'],
+ ['hardstyle','Toza','','03:45','04:45'],
+ ['hardstyle','Equalizerz','','04:45','END'],
+
+ ['hardcore','Ling Ling','Live','21:00','21:40'],
+ ['hardcore','The Cold Demon','','21:40','22:20'],
+ ['hardcore','DJ Giuly','','22:20','23:00'],
+ ['hardcore','Lucifer & Ray','with Piranattack Freak Show','23:00','23:45'],
+ ['hardcore','Dark Headz','Special 30 Years Show','23:45','00:30'],
+ ['hardcore','Hysta vs. Promo','','00:30','01:30'],
+ ['hardcore','Dr. Peacock','Tripping with Dr. Peacock (Live)','01:30','02:30'],
+ ['hardcore','Hysta','','02:30','03:15'],
+ ['hardcore','The Sickest Squad','pres. Bassdrum Demolition','03:15','04:15'],
+ ['hardcore','Dr. Z','','04:15','05:15'],
+ ['hardcore','Hardcorehead','','05:15','END'],
+
+ ['trance','Centaury','','21:00','22:00'],
+ ['trance','Mind-X','','22:00','23:15'],
+ ['trance','DJ Tatana','','23:15','00:15'],
+ ['trance','Dave202','','00:15','01:45'],
+ ['trance','Ferry Corsten','','01:45','03:15'],
+ ['trance','Ruben de Ronde','','03:15','04:45'],
+ ['trance','Madwave','','04:45','END'],
+
+ ['progressive','Solearis','','21:00','22:00'],
+ ['progressive','Audiotaste','','22:00','23:00'],
+ ['progressive','Effim','','23:00','00:00'],
+ ['progressive','Omiki','','00:00','01:30'],
+ ['progressive','Blastoyz','','01:30','03:00'],
+ ['progressive','Liquid Soul','','03:00','04:30'],
+ ['progressive','Tom vs. Shadow','','04:30','END'],
+
+ ['techno','Tanja Alison','','21:00','22:30'],
+ ['techno','Galopp B2B Friendly Neighbour','','22:30','00:00'],
+ ['techno','POLTERGST','','00:00','01:30'],
+ ['techno','Pencil','','01:30','03:00'],
+ ['techno','Dasstudach','','03:00','04:30'],
+ ['techno','A.N.I.','','04:30','END'],
+];
+const TOTAL = 540; // 21:00 -> 06:00
+const toMin = t => { if(t==='END') return TOTAL; const [h,m]=t.split(':').map(Number); let v=h*60+m; if(h<21) v+=1440; return v-1260; };
+const SETS = RAW.map((r,i)=>({id:'s'+i, floor:r[0], artist:r[1], note:r[2], start:r[3], end:r[4], s:toMin(r[3]), e:toMin(r[4])}));
+const F = Object.fromEntries(FLOORS.map(f=>[f.id,f]));
+const endLabel = s => s.end==='END' ? 'Ende' : s.end;
+const timeLabel = s => s.start+' – '+endLabel(s);
+const fc = id => `var(--${id})`;
+const esc = s => s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// Spotify (Artist-Suche, öffnet die App bzw. den Web-Player)
+const SPOTIFY_SPLIT = {
+  'Hysta vs. Promo':['Hysta','Promo'],
+  'Galopp B2B Friendly Neighbour':['Galopp','Friendly Neighbour'],
+  'Tom vs. Shadow':['Tom vs Shadow'],
+};
+const spotifyNames = s => SPOTIFY_SPLIT[s.artist] || [s.artist];
+const spotifyUrl = n => 'https://open.spotify.com/search/' + encodeURIComponent(n) + '/artists';
+const spLinks = (s, label) => spotifyNames(s).map(n=>`<a class="sp" href="${spotifyUrl(n)}" target="_blank" rel="noopener">${label ? 'Spotify' : esc(n)}</a>`).join('');
+const spLinksLabeled = s => { const ns=spotifyNames(s); return ns.length===1 ? `<a class="sp" href="${spotifyUrl(ns[0])}" target="_blank" rel="noopener">Spotify</a>` : spLinks(s,false); };
+
+// event time (Europe/Zurich, CET = UTC+1 on 7 Nov)
+const EVENT_START = Date.UTC(2026,10,7,20,0,0);
+const nowMin = () => (Date.now()-EVENT_START)/60000;
+const isLive = () => { const n=nowMin(); return n>=0 && n<TOTAL; };
+
+// storage
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+};
+let favs = new Set(store.get('sonic35-favs',[]));
+let activeFloors = new Set(FLOORS.map(f=>f.id));
+let mode = store.get('sonic35-mode', window.innerWidth < 760 ? 'list' : 'grid');
+
+function toggleFav(id){ favs.has(id)?favs.delete(id):favs.add(id); store.set('sonic35-favs',[...favs]); renderAll(); }
+
+document.getElementById('nsets').textContent = SETS.length;
+
+// ---------- status ----------
+function renderStatus(){
+  const el = document.getElementById('status');
+  const n = nowMin();
+  if(n < 0){
+    const d = Math.ceil(-n/1440), h = Math.floor(-n/60);
+    el.innerHTML = h < 48 ? `Start in <b style="color:var(--text)">${h} Std ${Math.floor(-n%60)} Min</b>` : `Noch <b style="color:var(--text)">${d} Tage</b> bis zum Start`;
+  } else if(n < TOTAL){
+    const playing = FLOORS.map(f=>SETS.find(s=>s.floor===f.id && n>=s.s && n<s.e)).filter(Boolean);
+    el.innerHTML = `<span class="live">Läuft jetzt</span> &nbsp;` + playing.map(s=>`<span style="white-space:nowrap"><span style="color:${fc(s.floor)}">●</span> ${esc(s.artist)}</span>`).join(' &nbsp; ');
+  } else {
+    el.textContent = 'Sonic #35 ist vorbei. Danke fürs Raven!';
+  }
+}
+
+// ---------- timetable ----------
+function renderChips(){
+  const box = document.getElementById('floorchips');
+  box.innerHTML = `<button class="chip" data-all aria-pressed="${activeFloors.size===FLOORS.length}">Alle Floors</button>` +
+    FLOORS.map(f=>`<button class="chip" data-f="${f.id}" aria-pressed="${activeFloors.has(f.id)}"><span class="dot" style="background:${fc(f.id)}"></span>${f.name}</button>`).join('');
+  box.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.f;
+    if(activeFloors.size===FLOORS.length){ activeFloors=new Set([id]); }
+    else if(activeFloors.has(id)){ activeFloors.delete(id); if(!activeFloors.size) activeFloors=new Set(FLOORS.map(f=>f.id)); }
+    else activeFloors.add(id);
+    renderChips(); renderTT();
+  });
+  box.querySelector('[data-all]').onclick=()=>{ activeFloors=new Set(FLOORS.map(f=>f.id)); renderChips(); renderTT(); };
+  document.querySelectorAll('.seg button').forEach(b=>{ b.classList.toggle('on', b.dataset.mode===mode); b.onclick=()=>{ mode=b.dataset.mode; store.set('sonic35-mode',mode); renderChips(); renderTT(); }; });
+}
+
+function renderTT(){
+  const floors = FLOORS.filter(f=>activeFloors.has(f.id));
+  const n = nowMin(), live = isLive();
+  const tt = document.getElementById('tt');
+  if(mode==='grid'){
+    let ticks='', lines='';
+    for(let m=0;m<=TOTAL;m+=60){
+      const h=(21+m/60)%24;
+      if(m<TOTAL) ticks += `<div class="tick" style="top:calc(${m}*var(--scale))">${String(h).padStart(2,'0')}:00</div>`;
+      if(m>0 && m<TOTAL) lines += `<div class="hline" style="top:calc(${m}*var(--scale) + 49px)"></div>`;
+    }
+    const head = `<div class="gh"></div>` + floors.map(f=>`<div class="gh"><div class="fname"><span class="dot" style="background:${fc(f.id)}"></span>${f.name}${f.isNew?'<span class="tag">Neu</span>':''}</div><div class="fgenre">${f.genre}</div></div>`).join('');
+    const cols = floors.map(f=>{
+      return `<div class="col">` + SETS.filter(s=>s.floor===f.id).map(s=>{
+        const h=(s.e-s.s);
+        const short = h<=35;
+        const cls = ['set', short?'short':'', favs.has(s.id)?'fav':'', live && n>=s.s && n<s.e?'now':''].join(' ');
+        return `<div class="${cls}" data-id="${s.id}" style="--fc:${fc(s.floor)};top:calc(${s.s}*var(--scale) + 1px);height:calc(${h}*var(--scale) - 3px)">
+          <div class="an">${esc(s.artist)}${!short && s.note?`<div class="anote">${esc(s.note)}</div>`:''}</div><div class="at">${timeLabel(s)}</div></div>`;
+      }).join('') + `</div>`;
+    }).join('');
+    const nowline = live ? `<div class="nowline" style="top:calc(${n}*var(--scale) + 49px)"><span>${new Date().toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Zurich'})}</span></div>` : '';
+    tt.innerHTML = `<div class="grid-scroll"><div class="grid" style="--cols:${floors.length}">${head}<div class="timecol">${ticks}</div>${cols}${lines}${nowline}</div></div>`;
+    // header height correction for lines
+    const gh = tt.querySelector('.gh'); const hh = gh ? gh.offsetHeight : 49;
+    tt.querySelectorAll('.hline,.nowline').forEach(el=>{ el.style.top = el.style.top.replace('49px', hh+'px'); });
+  } else {
+    tt.innerHTML = `<div class="floors-list">` + floors.map(f=>`
+      <div class="fl" style="--fc:${fc(f.id)}">
+        <div class="fl-h"><div><div class="fname">${f.name}${f.isNew?'<span class="tag">Neu</span>':''}</div><div class="fgenre">${f.genre}</div></div></div>
+        ${SETS.filter(s=>s.floor===f.id).map(s=>rowHTML(s, live && n>=s.s && n<s.e)).join('')}
+      </div>`).join('') + `</div>`;
+  }
+  bindSets(tt);
+}
+
+function rowHTML(s, now, extra=''){
+  return `<div class="row ${now?'now':''}" data-id="${s.id}">
+    <div class="rt">${timeLabel(s)}</div>
+    <div class="rn">${esc(s.artist)}${s.note?`<span class="rnote">${esc(s.note)}</span>`:''}${extra}<div class="sp-row">${spLinksLabeled(s)}</div></div>
+    <button class="star ${favs.has(s.id)?'on':''}" data-star="${s.id}" aria-label="Merken">${favs.has(s.id)?'★':'☆'}</button>
+  </div>`;
+}
+
+function bindSets(root){
+  root.querySelectorAll('a.sp').forEach(a=>a.addEventListener('click',e=>e.stopPropagation()));
+  root.querySelectorAll('[data-star]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); toggleFav(b.dataset.star); });
+  root.querySelectorAll('[data-id]').forEach(el=>el.onclick=()=>openSet(el.dataset.id));
+}
+
+// ---------- artists A–Z ----------
+function artistKey(name){ return name.replace(/^(DJ|The|Dr\.?)\s+/i,'').toUpperCase(); }
+function renderArtists(){
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const by = {};
+  SETS.forEach(s=>{ (by[s.artist] ||= []).push(s); });
+  const names = Object.keys(by).sort((a,b)=>artistKey(a).localeCompare(artistKey(b),'de'));
+  document.getElementById('artsub').textContent = `${names.length} Acts auf 5 Floors, alphabetisch (ohne «DJ», «The», «Dr.»).`;
+  const filtered = names.filter(nm => !q || nm.toLowerCase().includes(q) || by[nm].some(s=>(s.note+' '+F[s.floor].genre).toLowerCase().includes(q)));
+  if(!filtered.length){ document.getElementById('az').innerHTML = `<div class="empty">Kein Artist gefunden.</div>`; return; }
+  const groups = {};
+  filtered.forEach(nm=>{ let L=artistKey(nm)[0]; if(!/[A-Z]/.test(L)) L='#'; (groups[L] ||= []).push(nm); });
+  document.getElementById('az').innerHTML = `<div class="az">` + Object.keys(groups).map(L=>`
+    <div class="letter"><h3>${L}</h3>${groups[L].map(nm=>{
+      const sets = by[nm]; const anyFav = sets.some(s=>favs.has(s.id));
+      const note = sets.map(s=>s.note).filter(Boolean)[0];
+      return `<div class="art"><div class="rn">${esc(nm)}${note?` <span style="font:400 12px Inter;color:var(--muted);text-transform:none">· ${esc(note)}</span>`:''}</div>
+        <button class="star ${anyFav?'on':''}" data-star="${sets[0].id}" aria-label="Merken">${anyFav?'★':'☆'}</button>
+        <div class="slots">${sets.map(s=>`<span class="slot" data-id="${s.id}"><span class="dot" style="background:${fc(s.floor)}"></span>${F[s.floor].name} · ${timeLabel(s)}</span>`).join('')}${spLinksLabeled(sets[0])}</div></div>`;
+    }).join('')}</div>`).join('') + `</div>`;
+  bindSets(document.getElementById('az'));
+}
+
+// ---------- floors ----------
+function renderFloors(){
+  document.getElementById('fcards').innerHTML = FLOORS.map(f=>{
+    const sets = SETS.filter(s=>s.floor===f.id);
+    const closer = sets[sets.length-1];
+    return `<div class="fcard" data-floor="${f.id}" style="--fc:${fc(f.id)}">
+      <div class="fname">${f.name}${f.isNew?'<span class="tag">Neu</span>':''}</div>
+      <div class="fgenre">${f.genre}${f.vip?'<br><span class="tag ghost" style="margin:6px 0 0">Mit VIP-Tribüne</span>':''}</div>
+      <div class="meta"><div><b>${sets.length}</b>Sets</div><div><b>21:00</b>Start</div></div>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Closing: <span style="color:var(--text)">${esc(closer.artist)}</span> ab ${closer.start}</div>
+      <div class="names">${sets.map(s=>`<span>${esc(s.artist)}</span>`).join(' · ')}</div>
+      ${f.extra?`<div style="font-size:12px;color:var(--muted);margin-top:10px">${f.extra}</div>`:''}
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.fcard').forEach(c=>c.onclick=()=>{ activeFloors=new Set([c.dataset.floor]); location.hash='timetable'; renderChips(); renderTT(); });
+}
+
+// ---------- plan ----------
+function renderPlan(){
+  const list = SETS.filter(s=>favs.has(s.id)).sort((a,b)=>a.s-b.s||a.e-b.e);
+  document.getElementById('favcount').textContent = list.length ? list.length : '';
+  const box = document.getElementById('planlist');
+  if(!list.length){ box.innerHTML = `<div class="card"><p style="margin:0">Noch nichts gemerkt. Tippe im Timetable oder bei den Artists auf ☆, dann erscheinen die Sets hier chronologisch.</p></div>`; return; }
+  const n = nowMin(), live = isLive();
+  box.innerHTML = `<div class="fl" style="--fc:var(--accent)">` + list.map(s=>{
+    const clash = list.filter(o=>o!==s && o.s < s.e && s.s < o.e);
+    const extra = `<span class="rnote"><span style="color:${fc(s.floor)}">●</span> ${F[s.floor].name}${clash.length?` &nbsp;<span class="clash">überschneidet sich mit ${clash.map(c=>esc(c.artist)).join(', ')}</span>`:''}</span>`;
+    return rowHTML(s, live && n>=s.s && n<s.e, extra);
+  }).join('') + `</div>`;
+  bindSets(box);
+}
+
+// ---------- modal ----------
+function openSet(id){
+  const s = SETS.find(x=>x.id===id); const f = F[s.floor];
+  const fs = SETS.filter(x=>x.floor===s.floor); const i = fs.indexOf(s);
+  const prev = fs[i-1], next = fs[i+1];
+  const parallel = SETS.filter(o=>o.floor!==s.floor && o.s < s.e && s.s < o.e);
+  const sheet = document.getElementById('sheet');
+  sheet.style.setProperty('--fc', fc(s.floor));
+  sheet.innerHTML = `
+    <div class="fl-tag"><span class="dot"></span>${f.name} · ${f.genre}</div>
+    <h3>${esc(s.artist)}</h3>
+    ${s.note?`<div class="note">${esc(s.note)}</div>`:''}
+    <div class="time">${timeLabel(s)}</div>
+    <div class="sp-row" style="margin-top:12px">${spotifyNames(s).length>1 ? spLinks(s,false) : spLinks(s,true).replace('>Spotify<','>Auf Spotify anhören<')}</div>
+    <div class="ctx">
+      ${prev?`<div>Davor: <b>${esc(prev.artist)}</b> (${prev.start})</div>`:'<div>Eröffnet den Floor</div>'}
+      ${next?`<div>Danach: <b>${esc(next.artist)}</b> (${next.start})</div>`:'<div>Closing-Set bis Schluss</div>'}
+      ${parallel.length?`<div style="margin-top:6px">Gleichzeitig: ${parallel.map(p=>`<span style="white-space:nowrap"><span style="color:${fc(p.floor)}">●</span> <b>${esc(p.artist)}</b></span>`).join(', ')}</div>`:''}
+    </div>
+    <div class="acts">
+      <button class="${favs.has(s.id)?'':'fav'}" id="mfav">${favs.has(s.id)?'★ Gemerkt – entfernen':'☆ Merken'}</button>
+      <button id="mclose">Schliessen</button>
+    </div>`;
+  document.getElementById('mfav').onclick=()=>{ toggleFav(s.id); openSet(s.id); };
+  document.getElementById('mclose').onclick=closeModal;
+  const m=document.getElementById('modal'); m.classList.add('on'); m.setAttribute('aria-hidden','false');
+}
+function closeModal(){ const m=document.getElementById('modal'); m.classList.remove('on'); m.setAttribute('aria-hidden','true'); }
+document.getElementById('modal').addEventListener('click',e=>{ if(e.target.id==='modal') closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+// ---------- routing ----------
+const VIEWS = ['timetable','artists','floors','plan','map','info'];
+function route(){
+  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'timetable';
+  VIEWS.forEach(x=>document.getElementById('v-'+x).classList.toggle('on', x===v));
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on', a.dataset.v===v));
+  if(v==='timetable') renderTT();
+}
+window.addEventListener('hashchange', ()=>{ route(); window.scrollTo({top:0}); });
+document.getElementById('q').addEventListener('input', renderArtists);
+
+function renderAll(){ renderStatus(); renderChips(); renderTT(); renderArtists(); renderFloors(); renderPlan(); }
+renderAll(); route();
+setInterval(()=>{ renderStatus(); if(isLive()){ renderTT(); renderPlan(); } }, 60000);
+</script>
+</body>
+</html>
